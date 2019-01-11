@@ -222,12 +222,23 @@ class AioHeosPlayer(object):
     def play_prev(self):
         " prev "
         self._controller.request_play_previous(self.player_id)
-    
+
+    def play_favorite(self, fav_mid):
+        " Favorites "
+        self._controller.play_favourite(self.player_id, fav_mid)
+
+    def play_stream(self , sid, mid):
+        " Favorites "
+        self._controller.play_stream(self.player_id, sid, mid)
+
     def set_volume(self, volume):
         self._controller.set_volume(volume, self.player_id)
 
     def source_list(self):
         return self._controller.get_music_sources()
+
+    def favourites_list(self):
+        return self._controller.get_favourites()
 
     @property
     def sid(self):

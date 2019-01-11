@@ -23,10 +23,9 @@ def heos_test(loop):
 
     heos.request_groups()
     heos.get_groups()[0].request_update()
-    favs = None
-    for _ in range(0, 20):            
+    for _ in range(0, 20):
         favs = heos.get_favourites()    
-        if favs == None:            
+        if len(favs) == 0:
             yield from asyncio.sleep(0.5)
     
     
@@ -53,6 +52,11 @@ def heos_test(loop):
     # heos.play_content(content, content_type)
     heos.get_players()[0].stop()
     print(heos.get_players()[0].source_list())
+    for fav in heos.get_players()[0].favourites_list():
+        if fav['name'] == "NRK P1 Buskerud (Kongsberg)":
+            heos.get_players()[0].play_favorite(fav['mid'])
+
+
     # do some work...
     yield from asyncio.sleep(100)
 

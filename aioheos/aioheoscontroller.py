@@ -588,9 +588,9 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         self.send_command(BROWSE_PLAY_STREAM, {'pid': pid,
                                        'mid': mid,
                                        'sid': sid})
-    def play_favourite(self, mid):
+    def play_favourite(self, pid, mid):
         " play play_favourite "
-        self.send_command(BROWSE_PLAY_STREAM, {'pid': self.player_id,
+        self.send_command(BROWSE_PLAY_STREAM, {'pid': pid,
                                        'mid': mid,
                                        'sid': self._favourites_sid})                                 
     def request_groups(self):
