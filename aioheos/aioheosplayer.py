@@ -182,6 +182,10 @@ class AioHeosPlayer(object):
         " toggle mute "
         self._controller.toggle_mute(self.player_id)
 
+    def set_mute(self, mute):
+        " set mute "
+        self._controller.toggle_mute(self.player_id, mute)
+
     def reset_now_playing(self):
         self._media_artist = None
         self._media_album = None
@@ -230,6 +234,12 @@ class AioHeosPlayer(object):
     def play_stream(self , sid, mid):
         " Favorites "
         self._controller.play_stream(self.player_id, sid, mid)
+
+    def play_source(self, source):
+        " Sourced "
+        for src in self._controller._music_sources:
+            if src["name"] == source:
+                self._controller.play_stream(self.player_id, src["sid"], None)
 
     def set_volume(self, volume):
         self._controller.set_volume(volume, self.player_id)

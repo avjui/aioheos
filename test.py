@@ -2,8 +2,10 @@
 " Heos python lib "
 
 import asyncio
-import aioheos
 from pprint import pprint
+
+import aioheos
+
 
 @asyncio.coroutine
 def heos_test(loop):

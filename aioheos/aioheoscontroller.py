@@ -2,15 +2,15 @@
 " Heos python lib "
 
 import asyncio
-import sys
 import json
+import sys
 import traceback
-from datetime import datetime
 from concurrent.futures import CancelledError
 from pprint import pprint
-from . import aioheosupnp
-from . import aioheosplayer
+
 from . import aioheosgroup
+from . import aioheosplayer
+from . import aioheosupnp
 
 HEOS_PORT = 1255
 
@@ -607,6 +607,10 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
     def toggle_mute(self, pid):
         " toggle mute "
         self.send_command(TOGGLE_MUTE, {'pid': pid})
+
+    def set_mute(self, pid, mute):
+        " set mute "
+        self.send_command(SET_MUTE_STATE, {'pid': pid, 'state': 'on' if mute else 'off'})
 
     def request_music_sources(self):
         " get music sources "
