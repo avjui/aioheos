@@ -205,7 +205,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
             except TimeoutError:
                 _LOGGER.exception('[E] Connection timed out, will try {}:{} again...'.format(self._host, port))
             except: # pylint: disable=bare-except
-                _LOGGER.exception('[E]', sys.exc_info()[0])
+                _LOGGER.exception('[E] %s', sys.exc_info()[0])
 
             yield from asyncio.sleep(5.0)
 
@@ -227,7 +227,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         if message != None and len(message) > 0:  
             result = {}  
             for elem in message.split('&'):
-                _LOGGER.debug("_parse_message Elem:", elem, elem.split('='))
+                _LOGGER.debug("_parse_message Elem: %s %s", elem, elem.split('='))
                 parts = elem.split('=')                
                 if (len(parts) == 2):
                     result[parts[0]]=parts[1]
@@ -254,7 +254,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         # if self._verbose:
         if self._verbose:
             _LOGGER.debug('DISPATCHER')
-            _LOGGER.debug((command, message, payload))
+            _LOGGER.debug("%s %s %s",command, message, payload)
         callbacks = {
             GET_PLAYERS: self._parse_players,
             GET_GROUPS: self._parse_groups,
@@ -316,9 +316,9 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
                 raise AioHeosException('No message or payload in reply. payload {}'.format(data))
         # pylint: disable=bare-except
         except AioHeosException as exc:
-            raise AioHeosException('Problem parsing ({})'.format(exc))
+            raise exc
         except:
-            _LOGGER.exception("Unexpected error:", sys.exc_info())
+            _LOGGER.exception("Unexpected error for msg '%s'", data)
             raise AioHeosException('Problem parsing command.')
 
         return None
@@ -351,7 +351,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
                 print('[I] Cancelling event loop...')
                 return
             except: # pylint: disable=bare-except
-                _LOGGER.exception('[E] Ignoring', sys.exc_info()[0])
+                _LOGGER.exception('[E] Ignoring %s', sys.exc_info()[0])
             if msg:
                 if self._verbose:
                     _LOGGER.debug(msg.decode())
@@ -365,9 +365,9 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
                 except AioHeosException as exc:
                     _LOGGER.exception('[E] Failed in parse excepton')
                     if self._verbose:
-                        _LOGGER.debug('MSG', msg)
-                        _LOGGER.debug('MSG decoded', msg.decode())
-                        _LOGGER.debug('MSG json', data)
+                        _LOGGER.debug('MSG %s', msg)
+                        _LOGGER.debug('MSG decoded %s', msg.decode())
+                        _LOGGER.debug('MSG json %s', data)
                     continue
             if callback:
                 if self._verbose:
@@ -459,7 +459,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         """ get player from array """
         for player in self._players:
             _LOGGER.debug(
-                "Compare player and pids {} {} {} {}".format(player.player_id, pid, type(player.player_id), type(pid)))
+                "Compare player and pids %s %s %s %s",player.player_id, pid, type(player.player_id), type(pid))
             if player.player_id == pid:
                 return player
 
@@ -550,11 +550,14 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
             player.media_id = payload['mid']
         if 'sid' in payload.keys():
             player._sid = payload['sid']
-            player._source_name = self._music_sources.get(player._sid,{'name','unknown'})['name']
+            if self._music_sources is not None:
+                source_obj = self._music_sources.get(player._sid, {'name': 'unknown'})
+                _LOGGER.debug("SOURCE %s", source_obj)
+                player._source_name = source_obj['name']
         if 'qid' in payload.keys():
             player._qid = payload['qid']
         if self._verbose:
-            _LOGGER.debug("_parse_now_playing_media", vars(player))
+            _LOGGER.debug("_parse_now_playing_media %s", vars(player))
 
     def get_favourites(self):
         """ get duration """
@@ -665,18 +668,18 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
 
         for source in payload:
             self._music_sources[source['sid']] = source
-            _LOGGER.debug("Source:", source)
+            _LOGGER.debug("Source: %s", source)
             if source['name'] == 'TuneIn':
-                _LOGGER.debug("TuneIn {}", source)
+                _LOGGER.debug("TuneIn %s", source)
             elif source['name'] == 'Favorites':
-                _LOGGER.debug("Favorites {}", source)
+                _LOGGER.debug("Favorites %s", source)
                 self._favourites_sid = source['sid']
                 self.send_command(BROWSE_BROWSE, {"sid": source['sid']})
 
     def _parse_browse_browse(self, payload, message): # pylint: disable=invalid-name        
         _LOGGER.debug("BROWSE_BROWSE fav sid <{}>, input sid <{}>".format(self._favourites_sid, message['sid']))
         if str(message['sid']) == str(self._favourites_sid):
-            _LOGGER.debug("Favorites:", payload)
+            _LOGGER.debug("Favorites: %s", payload)
             self._favourites = payload
 
     def get_music_sources(self):
