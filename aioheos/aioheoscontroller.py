@@ -3,14 +3,15 @@
 
 import asyncio
 import json
+import logging
 import sys
-import traceback
 from concurrent.futures import CancelledError
-from pprint import pprint
 
 from . import aioheosgroup
 from . import aioheosplayer
 from . import aioheosupnp
+
+_LOGGER = logging.getLogger(__name__)
 
 HEOS_PORT = 1255
 
@@ -173,7 +174,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
 
         # connect
         if self._verbose:
-            print('[I] Connecting to {}:{}'.format(self._host, port))
+            _LOGGER.debug('[I] Connecting to {}:{}'.format(self._host, port))
         yield from self._connect(self._host, port)
 
         # please, do not prettify json
@@ -202,9 +203,9 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
                 self._reader, self._writer = yield from asyncio.open_connection(host, port, loop=self._loop)
                 return
             except TimeoutError:
-                print('[E] Connection timed out, will try {}:{} again...'.format(self._host, port))
+                _LOGGER.exception('[E] Connection timed out, will try {}:{} again...'.format(self._host, port))
             except: # pylint: disable=bare-except
-                print('[E]', sys.exc_info()[0])
+                _LOGGER.exception('[E]', sys.exc_info()[0])
 
             yield from asyncio.sleep(5.0)
 
@@ -217,7 +218,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
             msg += '?' + '&'.join("{}={}".format(key, val) for (key, val) in message.items())
         msg += '\r\n'
         if self._verbose:
-            print(msg)
+            _LOGGER.debug(msg)
         self._writer.write(msg.encode('ascii'))
 
     @staticmethod
@@ -226,14 +227,14 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         if message != None and len(message) > 0:  
             result = {}  
             for elem in message.split('&'):
-                #print("Elem:",elem, elem.split('='))
+                _LOGGER.debug("_parse_message Elem:", elem, elem.split('='))
                 parts = elem.split('=')                
                 if (len(parts) == 2):
                     result[parts[0]]=parts[1]
                 elif(len(parts) == 1):
                     result[parts[0]] = True
                 else:
-                    print("No parts found in {}".format(message))                
+                    _LOGGER.warning("No parts found in {}".format(message))
             return result           
         else:
             return {}
@@ -252,8 +253,8 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         " call parser functions "
         # if self._verbose:
         if self._verbose:
-            print('DISPATCHER')
-            print((command, message, payload))
+            _LOGGER.debug('DISPATCHER')
+            _LOGGER.debug((command, message, payload))
         callbacks = {
             GET_PLAYERS: self._parse_players,
             GET_GROUPS: self._parse_groups,
@@ -289,9 +290,9 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
             callbacks[command](payload, message)
         elif command in commands_ignored:
             if self._verbose:
-                print('[I] command "{}" is ignored.'.format(command))
+                _LOGGER.debug('[I] command "{}" is ignored.'.format(command))
         else:
-            print('[W] command "{}" is not handled.'.format(command))
+            _LOGGER.warning('[W] command "{}" is not handled.'.format(command))
 
     def _parse_command(self, data):
         " parse command "
@@ -317,8 +318,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         except AioHeosException as exc:
             raise AioHeosException('Problem parsing ({})'.format(exc))
         except:
-            print ("Unexpected error:", sys.exc_info())
-            print(traceback.format_exc())
+            _LOGGER.exception("Unexpected error:", sys.exc_info())
             raise AioHeosException('Problem parsing command.')
 
         return None
@@ -342,36 +342,36 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
             try:
                 msg = yield from self._reader.readline()
             except TimeoutError:
-                print('[E] Connection got timed out, try to reconnect...')
+                _LOGGER.exception('[E] Connection got timed out, try to reconnect...')
                 yield from self._connect(self._host)
             except ConnectionResetError:
-                print('[E] Peer reset our connection, try to reconnect...')
+                _LOGGER.exception('[E] Peer reset our connection, try to reconnect...')
                 yield from self._connect(self._host)
             except (GeneratorExit, CancelledError):
                 print('[I] Cancelling event loop...')
                 return
             except: # pylint: disable=bare-except
-                print('[E] Ignoring', sys.exc_info()[0])
+                _LOGGER.exception('[E] Ignoring', sys.exc_info()[0])
             if msg:
                 if self._verbose:
-                    print(msg.decode())
+                    _LOGGER.debug(msg.decode())
                 # simplejson doesnt need to decode from byte to ascii
                 data = json.loads(msg.decode())
                 if self._verbose:
-                    print('DATA:')
-                    print(data)
+                    _LOGGER.debug('DATA:')
+                    _LOGGER.debug(data)
                 try:
                     self._parse_command(data)
                 except AioHeosException as exc:
-                    print('[E]', exc)
+                    _LOGGER.exception('[E] Failed in parse excepton')
                     if self._verbose:
-                        print('MSG', msg)
-                        print('MSG decoded', msg.decode())
-                        print('MSG json', data)
+                        _LOGGER.debug('MSG', msg)
+                        _LOGGER.debug('MSG decoded', msg.decode())
+                        _LOGGER.debug('MSG json', data)
                     continue
             if callback:
                 if self._verbose:
-                    print('TRIGGER CALLBACK')
+                    _LOGGER.debug('TRIGGER CALLBACK')
                 self._loop.create_task(self._callback_wrapper(callback))
 
     def new_device_callback(self, callback):
@@ -379,7 +379,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
 
     def close(self):
         " close "
-        print('[I] Closing down...')
+        _LOGGER.info('[I] Closing down...')
         if self._subscribtion_task:
             self._subscribtion_task.cancel()
 
@@ -458,7 +458,8 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
     def get_player(self, pid):
         """ get player from array """
         for player in self._players:
-            #print ("Compare player and pids {} {} {} {}".format(player.player_id,pid,  type(player.player_id), type(pid)))
+            _LOGGER.debug(
+                "Compare player and pids {} {} {} {}".format(player.player_id, pid, type(player.player_id), type(pid)))
             if player.player_id == pid:
                 return player
 
@@ -553,7 +554,7 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         if 'qid' in payload.keys():
             player._qid = payload['qid']
         if self._verbose:
-            pprint(vars(player))
+            _LOGGER.debug("_parse_now_playing_media", vars(player))
 
     def get_favourites(self):
         """ get duration """
@@ -659,23 +660,23 @@ class AioHeosController(object): # pylint: disable=too-many-public-methods,too-m
         player.duration = int(message['duration'])
 
     def _parse_browse_music_source(self, payload, message): # pylint: disable=invalid-name
-        print ("_parse_browse_music_source {}".format(payload))
+        _LOGGER.debug("_parse_browse_music_source {}".format(payload))
         self._music_sources = {}
 
         for source in payload:
             self._music_sources[source['sid']] = source
-            print ("Source:",source)
+            _LOGGER.debug("Source:", source)
             if source['name'] == 'TuneIn':
-                print ("TuneIn {}",source)
+                _LOGGER.debug("TuneIn {}", source)
             elif source['name'] == 'Favorites':
-                print ("Favorites {}",source)
+                _LOGGER.debug("Favorites {}", source)
                 self._favourites_sid = source['sid']
                 self.send_command(BROWSE_BROWSE, {"sid": source['sid']})
 
     def _parse_browse_browse(self, payload, message): # pylint: disable=invalid-name        
-        print ("BROWSE_BROWSE fav sid <{}>, input sid <{}>".format(self._favourites_sid, message['sid']))
+        _LOGGER.debug("BROWSE_BROWSE fav sid <{}>, input sid <{}>".format(self._favourites_sid, message['sid']))
         if str(message['sid']) == str(self._favourites_sid):
-            print ("Favorites:", payload)   
+            _LOGGER.debug("Favorites:", payload)
             self._favourites = payload
 
     def get_music_sources(self):
