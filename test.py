@@ -52,16 +52,18 @@ def heos_test(loop):
     #     content = fhello.read()
     # content_type = 'audio/mpeg'
     # heos.play_content(content, content_type)
-    heos.get_players()[0].stop()
-    print(heos.get_players()[0].source_list())
-    for fav in heos.get_players()[0].favourites_list():
-        if fav['name'] == "NRK P1 Buskerud (Kongsberg)":
-            heos.get_players()[0].play_favorite(fav['mid'])
+    # heos.get_players()[0].stop()
+    # print(heos.get_players()[0].source_list())
+    # for fav in heos.get_players()[0].favourites_list():
+    #     if fav['name']  == "NRK P1 Buskerud (Kongsberg)":
+    #         heos.get_players()[0].play_favorite(fav['mid'])
 
 
     # do some work...
-    yield from asyncio.sleep(100)
-
+    heos.get_players()[0].create_group(["-2145613281", "-760835591"])
+    yield from asyncio.sleep(10)
+    heos.get_groups()[0].recreate_group()
+    yield from asyncio.sleep(50)
     heos.close()
 
 

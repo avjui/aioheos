@@ -250,6 +250,13 @@ class AioHeosPlayer(object):
     def favourites_list(self):
         return self._controller.get_favourites()
 
+    def create_group(self, devices):
+        slave_ids = []
+        for slave in devices:
+            if slave != self.player_id:
+                slave_ids.append(slave)
+        self._controller.set_group(self.player_id, slave_ids)
+
     @property
     def sid(self):
         return self._sid
