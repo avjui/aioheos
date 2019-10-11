@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-" Heos Player "
+""" Heos Player """
 
 from datetime import datetime
 
 
 class AioHeosPlayer(object): 
-    " Asynchronous Heos Player class "
+    """ Asynchronous Heos Player class """
     def __init__(self, controller,  player_json):
         self._player_info = player_json
         self._player_id = str(player_json["pid"])
@@ -26,36 +26,35 @@ class AioHeosPlayer(object):
         self._media_image_url = None
         self._media_id = None
         self._callback = None
-        print("Creating player object {} for controller pid {}",self._player_id,self._controller._player_id)
+        print("Creating player object {} for controller pid {}", self._player_id,self._controller._player_id)
 
     @property
     def state_change_callback(self):
-        " get state_change_callback "
+        """ get state_change_callback """
         return self._callback
 
     @state_change_callback.setter
     def state_change_callback(self, callback):
         self._callback = callback
 
-
     @property
     def player_id(self):
-        " get player id "
+        """" get player id """
         return self._player_id
     
     @property
     def name(self):
-        " get player name "
+        """ get player name """
         return self._player_info["name"]
 
     @property
     def ip(self):
-        " get player name "
+        """ get player name """
         return self._player_info["ip"]
 
     @property
     def volume(self):
-        " get volume "
+        """ get volume """
         return self._volume_level
 
     @volume.setter
@@ -66,12 +65,12 @@ class AioHeosPlayer(object):
 
     @property
     def duration(self):
-        " get dureation "
+        """ get dureation """
         return self._duration
 
     @property
     def current_position_updated_at(self):
-        " get current_position_updated_at  "
+        """ get current_position_updated_at  """
         return self._current_position_updated_at
 
     @duration.setter
@@ -79,10 +78,9 @@ class AioHeosPlayer(object):
         self._duration = duration
         self.notify_listeners()
 
-
     @property
     def current_position(self):
-        " get current_position "
+        """ get current_position """
         return self._current_position
 
     @current_position.setter
@@ -93,19 +91,19 @@ class AioHeosPlayer(object):
 
     @property
     def mute(self):
-        " get mute "
+        """ get mute """
         return self._mute_state
-        
+
     @mute.setter
     def mute(self, value):
         self._mute_state = value
         self.notify_listeners()
-    
+
     @property
     def play_state(self):
-        " get play state "
+        """ get play state """
         return self._play_state
-        
+
     @play_state.setter
     def play_state(self, value):
         self._play_state = value
@@ -117,9 +115,9 @@ class AioHeosPlayer(object):
 
     @property
     def media_artist(self):
-        " get media_artist "
+        """ get media_artist """
         return self._media_artist
-        
+
     @media_artist.setter
     def media_artist(self, value):
         self._media_artist = value
@@ -127,39 +125,39 @@ class AioHeosPlayer(object):
 
     @property
     def media_album(self):
-        " get media_album "
+        """ get media_album """
         return self._media_album
-        
+
     @media_album.setter
     def media_album(self, value):
         self._media_album = value
         self.notify_listeners()
-    
+
     @property
     def media_title(self):
-        " get media_title "
+        """ get media_title """
         return self._media_title
-        
+
     @media_title.setter
     def media_title(self, value):
         self._media_title = value
         self.notify_listeners()
-    
+
     @property
     def media_image_url(self):
-        " get nedia_image_url "
+        """ get nedia_image_url """
         return self._media_image_url
-        
+
     @media_image_url.setter
     def media_image_url(self, value):
         self._media_image_url = value
         self.notify_listeners()
-    
+
     @property
     def media_id(self):
-        " get media_id "
+        """ get media_id """
         return self._media_id
-        
+
     @media_id.setter
     def media_id(self, value):
         self._media_id = value
@@ -179,11 +177,11 @@ class AioHeosPlayer(object):
         self.notify_listeners()
 
     def toggle_mute(self):
-        " toggle mute "
+        """ toggle mute """
         self._controller.toggle_mute(self.player_id)
 
     def set_mute(self, mute):
-        " set mute "
+        """ set mute """
         self._controller.toggle_mute(self.player_id, mute)
 
     def reset_now_playing(self):
@@ -200,43 +198,43 @@ class AioHeosPlayer(object):
         self._controller.request_now_playing_media(self.player_id)
 
     def volume_level_up(self, step=10):
-        " volume level up "
+        """ volume level up """
         self.set_volume(self._volume_level + step)
 
     def volume_level_down(self, step=10):
-        " volume level down "
+        """ volume level down """
         self.set_volume(self._volume_level - step)
 
     def stop(self):
-        " stop player "
+        """ stop player """
         self._controller.stop(self.player_id)
 
     def play(self):
-        " play "
+        """ play """
         self._controller.play(self.player_id)
 
     def pause(self):
-        " pause "
+        """ pause """
         self._controller.pause(self.player_id)
 
     def play_next(self):
-        " next "
+        """ next """
         self._controller.request_play_next(self.player_id)
     
     def play_prev(self):
-        " prev "
+        """ prev """
         self._controller.request_play_previous(self.player_id)
 
     def play_favorite(self, fav_mid):
-        " Favorites "
+        """ Favorites """
         self._controller.play_favourite(self.player_id, fav_mid)
 
-    def play_stream(self , sid, mid):
-        " Favorites "
+    def play_stream(self, sid, mid):
+        """ Favorites """
         self._controller.play_stream(self.player_id, sid, mid)
 
     def play_source(self, source):
-        " Sourced "
+        """ Sourced """
         for src in self._controller._music_sources:
             if src["name"] == source:
                 self._controller.play_stream(self.player_id, src["sid"], None)
@@ -272,7 +270,6 @@ class AioHeosPlayer(object):
     @source_name.setter
     def source_name(self, value):
         self._source_name = value
-
 
     @property
     def qid(self):
